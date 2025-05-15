@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Trang quản lý</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+  <style>
+    .edit-row { cursor: pointer; color: #007bff; text-decoration: underline;}
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+    <a class="navbar-brand" href="/">ANPR Demo</a>
+    <div class="ml-auto d-flex align-items-center">
+      <a href="/" class="btn btn-link">Trang chủ</a>
+      <a href="/admin" class="btn btn-link">Trang quản lý</a>
+    </div>
+  </nav>
+  <div class="container">
+    <h2>Danh sách xe vào/ra</h2>
+    <table class="table table-bordered" id="tbl">
+      <thead class="thead-dark">
+        <tr>
+          <th>ID</th><th>Biển số</th><th>Vào</th><th>Ra</th><th>Phí</th><th>Hành động</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr data-id="{{ r[0] }}">
+          <td>{{ r[0] }}</td>
+          <td>{{ r[1] }}</td>
+          <td>{{ r[2]|default('') }}</td>
+          <td>{{ r[3]|default('') }}</td>
+          <td>{{ r[4]|default('') }}</td>
+          <td>
+            {% if not r[3] %}
+              <a href="{{ url_for('xera', row_id=r[0]) }}" class="btn btn-danger btn-sm">Xe ra</a>
+            {% endif %}
+            <button type="button" class="btn btn-warning btn-sm edit-row">Sửa</button>
+            <button type="button" class="btn btn-outline-danger btn-sm delete-row">Xóa</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <a href="/" class="btn btn-secondary">← Quay lại Trang chủ</a>
+  </div>
+
+  <!-- POPUP SỬA -->
+  <div class="modal fade" tabindex="-1" role="dialog" id="editModal">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <form id="editForm" autocomplete="off">
+        <div class="modal-header">
+          <h5 class="modal-title">Sửa thông tin xe</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Đóng">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="edit_id">
+          <div class="form-group">
+            <label>Biển số</label>
+            <input type="text" id="edit_plate" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>Thời gian vào</label>
+            <input type="datetime-local" id="edit_entry_time" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>Thời gian ra</label>
+            <input type="datetime-local" id="edit_exit_time" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Phí</label>
+            <input type="number" id="edit_fee" class="form-control">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Lưu</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+        </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- Kết thúc popup -->
+
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // XÓA DÒNG
+    $("#tbl").on("click", ".delete-row", function(){
+      let row = $(this).closest("tr");
+      let id = row.data("id");
+      if(confirm("Xác nhận xóa bản ghi này?")) {
+        $.post("/delete/"+id,{},()=>{ row.remove(); });
+      }
+    });
+    // SỬA DÒNG
+    $("#tbl").on("click", ".edit-row", function(){
+      let row = $(this).closest("tr");
+      $("#edit_id").val(row.find("td:eq(0)").text());
+      $("#edit_plate").val(row.find("td:eq(1)").text());
+      $("#edit_entry_time").val(formatDT(row.find("td:eq(2)").text()));
+      $("#edit_exit_time").val(formatDT(row.find("td:eq(3)").text()));
+      $("#edit_fee").val(row.find("td:eq(4)").text());
+      $("#editModal").modal("show");
+    });
+    // FORMAT DATETIME TO INPUT
+    function formatDT(dt){
+      if(!dt || dt === 'None') return "";
+      // Xử lý định dạng yyyy-mm-dd HH:MM:SS
+      let d = new Date(dt.replace(" ","T"));
+      if (isNaN(d)) return "";
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      return d.toISOString().slice(0,16);
+    }
+    // SUBMIT FORM SỬA
+    $("#editForm").submit(function(e){
+      e.preventDefault();
+      let id = $("#edit_id").val();
+      let data = {
+        plate: $("#edit_plate").val(),
+        entry_time: $("#edit_entry_time").val().replace("T"," "),
+        exit_time: $("#edit_exit_time").val() ? $("#edit_exit_time").val().replace("T"," ") : null,
+        fee: $("#edit_fee").val()
+      };
+      $.ajax({
+        url: "/edit/"+id,
+        method: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(data),
+        success: ()=>{ location.reload(); }
+      });
+    });
+  </script>
+</body>
+</html>
