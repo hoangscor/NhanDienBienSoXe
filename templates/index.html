@@ -6,36 +6,22 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     .navbar { margin-bottom: 24px; }
-    .toggle-auto-indicator {
-      font-weight: bold;
-      color: white;
-      background: #198754;
-      border: none;
-      padding: 0.5rem 1.2rem;
-      border-radius: 0.4rem;
-      margin-right: 8px;
-      cursor: pointer;
-    }
-    .toggle-auto-off {
-      background: #b2b2b2 !important;
-      color: #222 !important;
-    }
+    .toggle-auto-indicator { font-weight: bold; color: white; background: #198754; border: none;
+      padding: 0.5rem 1.2rem; border-radius: 0.4rem; margin-right: 8px; cursor: pointer; }
+    .toggle-auto-off { background: #b2b2b2 !important; color: #222 !important; }
   </style>
 </head>
 <body>
-  <!-- HEADER -->
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <a class="navbar-brand" href="/">ANPR Demo</a>
     <div class="ml-auto d-flex align-items-center">
-      <button id="btn-auto"
-        class="toggle-auto-indicator {{ 'toggle-auto-off' if not auto else '' }}">
+      <button id="btn-auto" class="toggle-auto-indicator {{ 'toggle-auto-off' if not auto else '' }}">
         {{ 'Tự động: BẬT' if auto else 'Tự động: TẮT' }}
       </button>
       <a href="/" class="btn btn-link">Trang chủ</a>
       <a href="/admin" class="btn btn-link">Trang quản lý</a>
     </div>
   </nav>
-
   <div class="container">
     <h2>Nhận diện biển số xe</h2>
     {% if auto %}
@@ -44,7 +30,6 @@
         <div id="auto-log" class="mt-2"></div>
       </div>
     {% endif %}
-
     <form method="post" enctype="multipart/form-data" class="mb-4">
       <div class="form-row">
         <div class="col-md-6">
@@ -66,28 +51,26 @@
         </div>
       </div>
       <button class="btn btn-primary mt-3" {% if auto %}disabled{% endif %}>Xử lý ảnh</button>
-      {% if not auto and plate %}
-        <button class="btn btn-success mt-3 ml-2" formaction="/xevao" formmethod="post" name="plate" value="{{ plate }}">Xe vào</button>
-      {% endif %}
     </form>
-
     {% if msg %}
       <div class="alert alert-info">{{ msg }}</div>
       {% if plate %}
         <h4>Biển số: <strong>{{ plate }}</strong></h4>
         <div class="mb-3">
-          <img src="{{ url_for('static',filename='processed/11_result.jpg') }}"
-               class="img-fluid border" alt="Result">
+          <img src="{{ url_for('static',filename='processed/11_result.jpg') }}" class="img-fluid border" alt="Result">
         </div>
+        <!-- Nút Xe vào/Xe ra logic -->
+        <form method="post" action="{{ '/xevao' if not is_parked else '/xera' }}">
+          <input type="hidden" name="plate" value="{{ plate }}">
+          {% if not is_parked %}
+            <button class="btn btn-success mt-2">Xe vào</button>
+          {% else %}
+            <span class="ml-2 text-primary">Xe hiện đang đỗ</span>
+            <button class="btn btn-danger mt-2 ml-2">Xe ra</button>
+          {% endif %}
+        </form>
       {% endif %}
-
-      <!-- Luôn hiển thị các nút toggle xem các bước xử lý -->
-      <button id="toggle-steps" class="btn btn-secondary mb-2">
-        Hiển thị các bước xử lý kỹ thuật (11 bước)
-      </button>
-      <button id="toggle-logic-steps" class="btn btn-info mb-4 ml-2">
-        Hiển thị 6 bước xử lý chính
-      </button>
+      <button id="toggle-steps" class="btn btn-secondary mb-4">Hiển thị các bước xử lý (11 bước)</button>
       <div id="steps" style="display:none;">
         <div class="row">
           {% for i,label in [
@@ -104,49 +87,44 @@
           {% endfor %}
         </div>
       </div>
-      <div id="logic-steps" style="display:none;">
+      <!-- Nút 6 bước chính -->
+      <button id="toggle-6steps" class="btn btn-info mb-4">Hiển thị 6 bước chính</button>
+      <div id="steps6" style="display:none;">
         <div class="row">
-          {% for i, name, label in [
-            (1, 'phat_hien_bien_so', 'Phát hiện vị trí biển số'),
-            (2, 'cat_phoi_canh', 'Cắt & hiệu chỉnh phối cảnh'),
-            (3, 'nhi_phan_hoa', 'Nhị phân hóa (thresholding)'),
-            (4, 'tach_ky_tu', 'Tách ký tự'),
-            (5, 'ocr_ky_tu', 'Nhận dạng ký tự (OCR)'),
-            (6, 'ghep_chuoi', 'Ghép chuỗi biển số')
+          {% for label, name in [
+            ('L01_phat_hien_bien_so', 'Phát hiện vị trí biển số'),
+            ('L02_cat_phoi_canh', 'Tách vùng biển số, hiệu chỉnh'),
+            ('L03_nhi_phan_hoa', 'Nhị phân hóa'),
+            ('L04_tach_ky_tu', 'Phân tách ký tự'),
+            ('L05_ocr_ky_tu', 'Nhận dạng ký tự bằng OCR'),
+            ('L06_ghep_chuoi', 'Ghép lại chuỗi biển số')
           ] %}
           <div class="col-md-4 mb-3 text-center">
-            <p>Bước {{ i }}. {{ label }}</p>
-            <img src="{{ url_for('static',filename='processed/L{:02d}_{}.jpg'.format(i, name)) }}"
-                 class="img-fluid border" alt="{{ label }}">
+            <p>{{ name }}</p>
+            <img src="{{ url_for('static', filename='processed/' + label + '.jpg') }}"
+                 class="img-fluid border" alt="{{ name }}">
           </div>
           {% endfor %}
         </div>
       </div>
     {% endif %}
   </div>
-
   <script>
-    // Lấy trạng thái auto từ server
-    const autoFlag = "{{ 'true' if auto else 'false' }}";
-    // Toggle các bước xử lý kỹ thuật
     document.getElementById('toggle-steps')?.addEventListener('click', e => {
       const s=document.getElementById('steps');
-      if(s.style.display==='none'){s.style.display='block'; e.target.textContent='Ẩn các bước xử lý kỹ thuật (11 bước)';}
-      else                        {s.style.display='none'; e.target.textContent='Hiển thị các bước xử lý kỹ thuật (11 bước)';}
+      if(s.style.display==='none'){s.style.display='block'; e.target.textContent='Ẩn các bước';}
+      else                        {s.style.display='none'; e.target.textContent='Hiển thị các bước xử lý (11 bước)';}
     });
-    // Toggle 6 bước logic giống báo cáo
-    document.getElementById('toggle-logic-steps')?.addEventListener('click', e => {
-      const s=document.getElementById('logic-steps');
-      if(s.style.display==='none'){s.style.display='block'; e.target.textContent='Ẩn 6 bước xử lý logic';}
-      else                        {s.style.display='none'; e.target.textContent='Hiển thị 6 bước xử lý logic giống báo cáo';}
+    document.getElementById('toggle-6steps')?.addEventListener('click', e => {
+      const s=document.getElementById('steps6');
+      if(s.style.display==='none'){s.style.display='block'; e.target.textContent='Ẩn 6 bước chính';}
+      else                        {s.style.display='none'; e.target.textContent='Hiển thị 6 bước chính';}
     });
-    // Toggle AUTO_MODE
     document.getElementById('btn-auto').addEventListener('click',async ()=>{
       const r = await fetch('/toggle_auto',{method:'POST'});
       location.reload();
     });
-
-    // Webcam capture (luôn hoạt động ở mọi chế độ)
+    const autoFlag = "{{ 'true' if auto else 'false' }}";
     const video=document.getElementById('video'),
           canvas=document.getElementById('canvas'),
           cameraBtn=document.getElementById('camera-btn'),
@@ -175,8 +153,6 @@
         }
       },'image/jpeg');
     });
-
-    // Nếu bật tự động thì liên tục hiển thị log biển số mới nhất (AJAX)
     {% if auto %}
     function pollLastAuto(){
       fetch('/get_last_auto')
