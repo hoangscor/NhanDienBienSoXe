@@ -7,6 +7,8 @@
         rel="stylesheet">
   <style>
     .edit-row { cursor: pointer; color: #007bff; text-decoration: underline;}
+    .car-image-thumb { width: 80px; height: 48px; object-fit: cover; border: 1px solid #bbb; }
+    th, td { vertical-align: middle !important; }
   </style>
 </head>
 <body>
@@ -22,7 +24,14 @@
     <table class="table table-bordered" id="tbl">
       <thead class="thead-dark">
         <tr>
-          <th>ID</th><th>Biển số</th><th>Vào</th><th>Ra</th><th>Phí</th><th>Hành động</th>
+          <th>ID</th>
+          <th>Biển số</th>
+          <th>Vào</th>
+          <th>Ảnh vào</th>
+          <th>Ra</th>
+          <th>Ảnh ra</th>
+          <th>Phí</th>
+          <th>Hành động</th>
         </tr>
       </thead>
       <tbody>
@@ -31,10 +40,28 @@
           <td>{{ r[0] }}</td>
           <td>{{ r[1] }}</td>
           <td>{{ r[2]|default('') }}</td>
-          <td>{{ r[3]|default('') }}</td>
+          <td>
+            {% if r[3] %}
+              <a href="/{{ r[3]|replace('\\','/') }}" target="_blank" title="Xem ảnh vào">
+                <img src="/{{ r[3]|replace('\\','/') }}" class="car-image-thumb" alt="Ảnh vào">
+              </a>
+            {% else %}
+              <span class="text-muted">Không có</span>
+            {% endif %}
+          </td>
           <td>{{ r[4]|default('') }}</td>
           <td>
-            {% if not r[3] %}
+            {% if r[5] %}
+              <a href="/{{ r[5]|replace('\\','/') }}" target="_blank" title="Xem ảnh ra">
+                <img src="/{{ r[5]|replace('\\','/') }}" class="car-image-thumb" alt="Ảnh ra">
+              </a>
+            {% else %}
+              <span class="text-muted">Không có</span>
+            {% endif %}
+          </td>
+          <td>{{ r[6]|default('') }}</td>
+          <td>
+            {% if not r[4] %}
               <a href="{{ url_for('xera', row_id=r[0]) }}" class="btn btn-danger btn-sm">Xe ra</a>
             {% endif %}
             <button type="button" class="btn btn-warning btn-sm edit-row">Sửa</button>
@@ -104,14 +131,13 @@
       $("#edit_id").val(row.find("td:eq(0)").text());
       $("#edit_plate").val(row.find("td:eq(1)").text());
       $("#edit_entry_time").val(formatDT(row.find("td:eq(2)").text()));
-      $("#edit_exit_time").val(formatDT(row.find("td:eq(3)").text()));
-      $("#edit_fee").val(row.find("td:eq(4)").text());
+      $("#edit_exit_time").val(formatDT(row.find("td:eq(4)").text()));
+      $("#edit_fee").val(row.find("td:eq(6)").text());
       $("#editModal").modal("show");
     });
     // FORMAT DATETIME TO INPUT
     function formatDT(dt){
       if(!dt || dt === 'None') return "";
-      // Xử lý định dạng yyyy-mm-dd HH:MM:SS
       let d = new Date(dt.replace(" ","T"));
       if (isNaN(d)) return "";
       d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
