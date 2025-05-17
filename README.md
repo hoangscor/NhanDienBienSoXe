@@ -91,3 +91,31 @@ Phân tách ký tự
 OCR từng ký tự
 
 Ghép lại chuỗi biển số
+
+🚀 CÀI ĐẶT & CHẠY HỆ THỐNG
+
+Clone project
+
+git clone https://github.com/your-username/your-anpr-project.git
+cd your-anpr-project
+
+Tạo môi trường ảo (khuyến nghị)
+
+python -m venv venv
+venv\Scripts\activate # Windows
+
+Cài đặt thư viện
+
+pip install -r requirements.txt
+
+Cài đặt Tesseract OCR
+
+Tải và cài đặt Tesseract tại: https://github.com/tesseract-ocr/tesseract
+
+Ghi chú đường dẫn cài đặt và cập nhật biến môi trường nếu cần
+
+Chạy Flask App
+
+python app.py
+
+Hệ thống sẽ chạy tại http://localhost:8080
