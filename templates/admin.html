@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <title>Trang quản lý</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/css/bootstrap.min.css"
-        rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     .edit-row { cursor: pointer; color: #007bff; text-decoration: underline;}
     .car-image-thumb { width: 80px; height: 48px; object-fit: cover; border: 1px solid #bbb; }
     th, td { vertical-align: middle !important; }
+    .unmatched { color: #c00; font-size: 0.9em;}
+    .matched { color: #198754; font-size: 0.9em;}
   </style>
 </head>
 <body>
@@ -55,6 +56,11 @@
               <a href="/{{ r[5]|replace('\\','/') }}" target="_blank" title="Xem ảnh ra">
                 <img src="/{{ r[5]|replace('\\','/') }}" class="car-image-thumb" alt="Ảnh ra">
               </a>
+              {% if r[7] == 1 %}
+                <span class="matched">Xe ra đối chiếu</span>
+              {% endif %}
+            {% elif r[4] %}
+              <span class="unmatched">Chưa đối chiếu với xe</span>
             {% else %}
               <span class="text-muted">Không có</span>
             {% endif %}
@@ -62,7 +68,7 @@
           <td>{{ r[6]|default('') }}</td>
           <td>
             {% if not r[4] %}
-              <a href="{{ url_for('xera', row_id=r[0]) }}" class="btn btn-danger btn-sm">Xe ra</a>
+              <a href="{{ url_for('xera_row', row_id=r[0]) }}" class="btn btn-danger btn-sm">Xe ra</a>
             {% endif %}
             <button type="button" class="btn btn-warning btn-sm edit-row">Sửa</button>
             <button type="button" class="btn btn-outline-danger btn-sm delete-row">Xóa</button>
@@ -73,8 +79,6 @@
     </table>
     <a href="/" class="btn btn-secondary">← Quay lại Trang chủ</a>
   </div>
-
-  <!-- POPUP SỬA -->
   <div class="modal fade" tabindex="-1" role="dialog" id="editModal">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -112,12 +116,9 @@
       </div>
     </div>
   </div>
-  <!-- Kết thúc popup -->
-
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // XÓA DÒNG
     $("#tbl").on("click", ".delete-row", function(){
       let row = $(this).closest("tr");
       let id = row.data("id");
@@ -125,7 +126,6 @@
         $.post("/delete/"+id,{},()=>{ row.remove(); });
       }
     });
-    // SỬA DÒNG
     $("#tbl").on("click", ".edit-row", function(){
       let row = $(this).closest("tr");
       $("#edit_id").val(row.find("td:eq(0)").text());
@@ -135,7 +135,6 @@
       $("#edit_fee").val(row.find("td:eq(6)").text());
       $("#editModal").modal("show");
     });
-    // FORMAT DATETIME TO INPUT
     function formatDT(dt){
       if(!dt || dt === 'None') return "";
       let d = new Date(dt.replace(" ","T"));
@@ -143,7 +142,6 @@
       d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
       return d.toISOString().slice(0,16);
     }
-    // SUBMIT FORM SỬA
     $("#editForm").submit(function(e){
       e.preventDefault();
       let id = $("#edit_id").val();
