@@ -3,3 +3,5 @@ opencv-python
 imutils
 pytesseract
 PyMySQL
+# Force apt install
+#render-build: apt-get update && apt-get install -y tesseract-ocr
