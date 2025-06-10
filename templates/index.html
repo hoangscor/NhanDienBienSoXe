@@ -2,174 +2,387 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>ANPR Demo</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ANPR By Hoàng Lê</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/tsparticles-slim@2.12.0/tsparticles.slim.bundle.min.js"></script>
+
   <style>
-    .navbar { margin-bottom: 24px; }
-    .toggle-auto-indicator { font-weight: bold; color: white; background: #198754; border: none;
-      padding: 0.5rem 1.2rem; border-radius: 0.4rem; margin-right: 8px; cursor: pointer; }
-    .toggle-auto-off { background: #b2b2b2 !important; color: #222 !important; }
+    /* ---- CSS NÂNG CAO CHO HIỆU ỨNG "LỒNG LỘN" ---- */
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0a101f; /* Màu nền tối hơn để làm nổi bật hiệu ứng */
+      color: #e0e0e0;
+      overflow-x: hidden;
+    }
+
+    /* Nền hạt (particle) động */
+    #tsparticles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+
+    /* Hiệu ứng kính mờ (Glassmorphism) được cải tiến */
+    .glass-card {
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    /* Hiệu ứng viền phát sáng khi hover */
+    .glass-card:hover {
+        border-color: rgba(56, 189, 248, 0.5);
+        box-shadow: 0 0 25px rgba(56, 189, 248, 0.15);
+    }
+
+    /* Hiệu ứng xuất hiện cho card chính */
+    .main-card-animation {
+        animation: fadeInUp 0.8s ease-out forwards;
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Hiệu ứng Glow cho nút chính */
+    .glow-on-hover {
+        box-shadow: 0 0 5px #2dd4bf, 0 0 10px #2dd4bf;
+        transition: all 0.3s ease-in-out;
+    }
+    .glow-on-hover:hover {
+        box-shadow: 0 0 15px #2dd4bf, 0 0 30px #2dd4bf;
+        transform: scale(1.05);
+    }
+
+    /* Tùy chỉnh input file đẹp hơn */
+    input[type="file"]::file-selector-button {
+      background: #1d4ed8; color: white; border: none; padding: 0.5rem 1rem;
+      border-radius: 0.375rem; cursor: pointer; transition: all 0.2s;
+      text-shadow: 0 0 5px rgba(255,255,255,0.5);
+    }
+    input[type="file"]::file-selector-button:hover {
+      background: #1e40af;
+      box-shadow: 0 0 10px #60a5fa;
+    }
+
+    /* Vô hiệu hóa các nút */
+    .btn-disabled {
+        background-color: #4a5568 !important;
+        background-image: none !important;
+        cursor: not-allowed;
+        opacity: 0.5;
+        box-shadow: none;
+    }
+
+    /* Hiển thị các bước xử lý */
+    .steps-grid {
+      display: none;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    .steps-grid.show {
+        display: grid;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   </style>
 </head>
-<body>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <a class="navbar-brand" href="/">ANPR Demo</a>
-    <div class="ml-auto d-flex align-items-center">
-      <button id="btn-auto" class="toggle-auto-indicator {{ 'toggle-auto-off' if not auto else '' }}">
-        {{ 'Tự động: BẬT' if auto else 'Tự động: TẮT' }}
-      </button>
-      <a href="/" class="btn btn-link">Trang chủ</a>
-      <a href="/admin" class="btn btn-link">Trang quản lý</a>
+<body class="min-h-screen">
+
+  <div id="tsparticles"></div>
+
+  <header class="p-4 shadow-lg glass-card sticky top-0 z-50">
+    <div class="container mx-auto flex justify-between items-center">
+      <a href="/" class="text-2xl font-black text-white tracking-wider flex items-center">
+        <i class="fas fa-car-on mr-3 text-cyan-400"></i>
+        <span>ANPR DEMO</span>
+      </a>
+      <div class="flex items-center space-x-4">
+        <button id="btn-auto" class="font-semibold text-white py-2 px-4 rounded-lg transition-all duration-300 ease-in-out flex items-center space-x-2 {{ 'bg-green-500 hover:bg-green-600' if auto else 'bg-gray-500 hover:bg-gray-600' }}">
+          <i class="fas fa-robot"></i>
+          <span>{{ 'Tự động: BẬT' if auto else 'Tự động: TẮT' }}</span>
+        </button>
+        <a href="/" class="text-gray-300 hover:text-white transition">Trang chủ</a>
+        <a href="/admin" class="text-gray-300 hover:text-white transition">Trang quản lý</a>
+      </div>
     </div>
-  </nav>
-  <div class="container">
-    <h2>Nhận diện biển số xe</h2>
-    {% if auto %}
-      <div class="alert alert-success">
-        <b>Đang chạy tự động:</b> Hệ thống tự động nhận diện khi có ảnh mới trong thư mục <code>images/</code>.
-        <div id="auto-log" class="mt-2"></div>
-      </div>
-    {% endif %}
-    <form method="post" enctype="multipart/form-data" class="mb-4">
-      <div class="form-row">
-        <div class="col-md-6">
-          <label>Chọn ảnh mẫu:</label>
-          <select name="image_name" class="form-control" {% if auto %}disabled{% endif %}>
-            <option value="">-- Không chọn --</option>
-            {% for fn in images %}
-              <option value="{{ fn }}">{{ fn }}</option>
-            {% endfor %}
-          </select>
+  </header>
+
+  <main class="container mx-auto p-4 md:p-8">
+
+    <div class="glass-card rounded-2xl shadow-2xl p-6 md:p-8 main-card-animation">
+      <h2 class="text-4xl font-black text-center mb-2 bg-clip-text text-transparent bg-gradient-to-r from-teal-300 to-cyan-400">NHẬN DIỆN BIỂN SỐ TỰ ĐỘNG</h2>
+      <p class="text-center text-gray-400 mb-8">Sử dụng AI để phân tích và trích xuất thông tin từ hình ảnh</p>
+
+      {% if auto %}
+        <div id="auto-mode-alert" class="bg-blue-500/30 border border-blue-400 text-blue-100 px-4 py-3 rounded-lg relative mb-6" role="alert">
+          <strong class="font-bold">Đang chạy tự động:</strong>
+          <span class="block sm:inline"> Hệ thống đang quét ảnh mới trong thư mục <code>images/</code>.</span>
+          <div id="auto-log" class="mt-2 font-mono"></div>
         </div>
-        <div class="col-md-6">
-          <label>Hoặc upload/chụp ảnh mới:</label><br>
-          <input type="file" name="photo" accept="image/*" class="form-control-file mb-2" {% if auto %}disabled{% endif %}>
-          <button type="button" id="camera-btn" class="btn btn-info mb-2">📷 Chụp từ webcam</button><br>
-          <video id="video" width="320" height="240" autoplay style="display:none;"></video><br>
-          <button type="button" id="snap" class="btn btn-warning mt-2" style="display:none;">Chụp ảnh</button>
-          <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
-        </div>
-      </div>
-      <button class="btn btn-primary mt-3" {% if auto %}disabled{% endif %}>Xử lý ảnh</button>
-    </form>
-    {% if msg %}
-      <div class="alert alert-info">{{ msg }}</div>
-      {% if plate %}
-        <h4>Biển số: <strong>{{ plate }}</strong></h4>
-        <div class="mb-3">
-          <img src="{{ url_for('static',filename='processed/11_result.jpg') }}" class="img-fluid border" alt="Result">
-        </div>
-        <!-- Nút Xe vào/Xe ra logic -->
-        <form method="post" action="{{ '/xevao' if not is_parked else '/xera' }}">
-          <input type="hidden" name="plate" value="{{ plate }}">
-          {% if not is_parked %}
-            <button class="btn btn-success mt-2">Xe vào</button>
-          {% else %}
-            <span class="ml-2 text-primary">Xe hiện đang đỗ</span>
-            <button class="btn btn-danger mt-2 ml-2">Xe ra</button>
-          {% endif %}
-        </form>
       {% endif %}
-      <button id="toggle-steps" class="btn btn-secondary mb-4">Hiển thị các bước xử lý (11 bước)</button>
-      <div id="steps" style="display:none;">
-        <div class="row">
-          {% for i,label in [
-            (1,'resized'),(2,'gray'),(3,'equalize'),
-            (4,'bilateral'),(5,'canny'),(6,'contour'),
-            (7,'crop'),(8,'denoise'),(9,'thresh'),
-            (10,'chars'),(11,'result')
-          ] %}
-          <div class="col-md-4 mb-3 text-center">
-            <p>{{ i }}. {{ label.capitalize() }}</p>
-            <img src="{{ url_for('static',filename='processed/{:02d}_{}.jpg'.format(i,label)) }}"
-                 class="img-fluid border" alt="{{ label }}">
+
+      <form method="post" enctype="multipart/form-data" class="mb-8" id="anpr-form">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+          <div class="space-y-6">
+            <div>
+              <label for="image_name" class="block mb-2 text-sm font-medium text-gray-300">Chọn ảnh mẫu có sẵn:</label>
+              <select name="image_name" id="image_name" class="bg-gray-800 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" {% if auto %}disabled{% endif %}>
+                <option value="">-- Không chọn --</option>
+                {% for fn in images %}
+                  <option value="{{ fn }}">{{ fn }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+                <label for="photo" class="block mb-2 text-sm font-medium text-gray-300">Hoặc upload ảnh mới:</label>
+                <input type="file" name="photo" id="photo" accept="image/*" class="block w-full text-sm text-gray-400" {% if auto %}disabled{% endif %}>
+            </div>
           </div>
-          {% endfor %}
-        </div>
-      </div>
-      <!-- Nút 6 bước chính -->
-      <button id="toggle-6steps" class="btn btn-info mb-4">Hiển thị 6 bước chính</button>
-      <div id="steps6" style="display:none;">
-        <div class="row">
-          {% for label, name in [
-            ('L01_phat_hien_bien_so', 'Phát hiện vị trí biển số'),
-            ('L02_cat_phoi_canh', 'Tách vùng biển số, hiệu chỉnh'),
-            ('L03_nhi_phan_hoa', 'Nhị phân hóa'),
-            ('L04_tach_ky_tu', 'Phân tách ký tự'),
-            ('L05_ocr_ky_tu', 'Nhận dạng ký tự bằng OCR'),
-            ('L06_ghep_chuoi', 'Ghép lại chuỗi biển số')
-          ] %}
-          <div class="col-md-4 mb-3 text-center">
-            <p>{{ name }}</p>
-            <img src="{{ url_for('static', filename='processed/' + label + '.jpg') }}"
-                 class="img-fluid border" alt="{{ name }}">
+          <div class="text-center bg-black/30 p-4 rounded-lg">
+            <h3 class="font-semibold text-lg mb-4">Sử dụng Webcam</h3>
+            <video id="video" width="320" height="240" autoplay class="rounded-lg mx-auto mb-4 border-2 border-gray-600" style="display:none;"></video>
+            <canvas id="canvas" width="320" height="240" class="rounded-lg mx-auto hidden"></canvas>
+            <div class="mt-4 space-x-4">
+              <button type="button" id="camera-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 glow-on-hover {% if auto %}btn-disabled{% endif %}">
+                <i class="fas fa-camera mr-2"></i>Mở Webcam
+              </button>
+              <button type="button" id="snap" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 hidden"><i class="fas fa-camera-retro mr-2"></i>Chụp Ảnh</button>
+            </div>
           </div>
-          {% endfor %}
         </div>
-      </div>
-    {% endif %}
+        <div class="text-center mt-8">
+          <button type="submit" id="submit-btn" class="bg-gradient-to-r from-teal-500 to-cyan-600 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-lg glow-on-hover {% if auto %}btn-disabled{% endif %}">
+            <i class="fas fa-cogs mr-2"></i>
+            <span>Xử Lý Ảnh</span>
+          </button>
+        </div>
+      </form>
+
+      {% if msg %}
+        <div id="result-section" class="mt-10 pt-8 border-t border-cyan-400/20">
+          <div class="text-center mb-8">
+              <h3 class="text-2xl font-semibold text-cyan-400">{{ msg }}</h3>
+          </div>
+          {% if plate %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div class="text-center">
+                    <h4 class="text-xl text-gray-300 mb-2">Biển số nhận diện được:</h4>
+                    <p class="text-6xl font-mono font-black py-4 px-6 rounded-lg inline-block border-2 border-yellow-400 shadow-lg bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-amber-500" style="text-shadow: 0 0 15px #facc15;">{{ plate }}</p>
+                    <form method="post" action="{{ '/xevao' if not is_parked else '/xera' }}" class="mt-6">
+                        <input type="hidden" name="plate" value="{{ plate }}">
+                        {% if not is_parked %}
+                            <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300"><i class="fas fa-arrow-down mr-2"></i>Xe Vào</button>
+                        {% else %}
+                             <span class="text-lg text-blue-400 block mb-3">Xe hiện đang ở trong bãi</span>
+                            <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300"><i class="fas fa-arrow-up mr-2"></i>Xe Ra</button>
+                        {% endif %}
+                    </form>
+                </div>
+                <div class="text-center">
+                    <h4 class="text-xl text-gray-300 mb-4">Ảnh kết quả:</h4>
+                    <img src="{{ url_for('static',filename='processed/11_result.jpg') }}" class="w-full max-w-md mx-auto img-fluid rounded-lg border-2 border-cyan-400 shadow-2xl" alt="Result">
+                </div>
+            </div>
+          {% endif %}
+
+          <div class="mt-12 text-center">
+              <div class="space-x-4">
+                  <button type="button" id="toggle-steps" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-5 rounded-lg transition duration-300"><i class="fas fa-list-ol mr-2"></i>Hiển thị 11 bước</button>
+                  <button type="button" id="toggle-6steps" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-5 rounded-lg transition duration-300"><i class="fas fa-tasks mr-2"></i>Hiển thị 6 bước chính</button>
+              </div>
+              <div id="steps" class="steps-grid mt-8 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {% for i,label in [(1,'resized'),(2,'gray'),(3,'equalize'),(4,'bilateral'),(5,'canny'),(6,'contour'),(7,'crop'),(8,'denoise'),(9,'thresh'),(10,'chars'),(11,'result')] %}
+                <div class="glass-card p-3 rounded-lg text-center transform hover:scale-105 transition-transform duration-300"><p class="font-semibold mb-2">{{ i }}. {{ label.capitalize() }}</p><img src="{{ url_for('static',filename='processed/{:02d}_{}.jpg'.format(i,label)) }}" class="w-full rounded-md border border-gray-600" alt="{{ label }}"></div>
+                {% endfor %}
+              </div>
+              <div id="steps6" class="steps-grid mt-8 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                 {% for label, name in [('L01_phat_hien_bien_so', 'Phát hiện vị trí biển số'),('L02_cat_phoi_canh', 'Tách vùng biển số, hiệu chỉnh'),('L03_nhi_phan_hoa', 'Nhị phân hóa'),('L04_tach_ky_tu', 'Phân tách ký tự'),('L05_ocr_ky_tu', 'Nhận dạng ký tự bằng OCR'),('L06_ghep_chuoi', 'Ghép lại chuỗi biển số')] %}
+                <div class="glass-card p-3 rounded-lg text-center transform hover:scale-105 transition-transform duration-300"><p class="font-semibold mb-2">{{ name }}</p><img src="{{ url_for('static', filename='processed/' + label + '.jpg') }}" class="w-full rounded-md border border-gray-600" alt="{{ name }}"></div>
+                {% endfor %}
+              </div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </main>
+
+  <div id="notification" class="fixed top-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg transform translate-x-full transition-transform duration-500">
+      <p id="notification-message"></p>
   </div>
-  <script>
-    document.getElementById('toggle-steps')?.addEventListener('click', e => {
-      const s=document.getElementById('steps');
-      if(s.style.display==='none'){s.style.display='block'; e.target.textContent='Ẩn các bước';}
-      else                        {s.style.display='none'; e.target.textContent='Hiển thị các bước xử lý (11 bước)';}
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- MODULE HIỆU ỨNG HẠT (PARTICLES) ---
+    tsParticles.load("tsparticles", {
+        fpsLimit: 60,
+        interactivity: { events: { onHover: { enable: true, mode: "repulse" }, resize: true }, modes: { repulse: { distance: 100, duration: 0.4 } } },
+        particles: {
+            color: { value: "#0ea5e9" },
+            links: { color: "#ffffff", distance: 150, enable: true, opacity: 0.1, width: 1 },
+            move: { direction: "none", enable: true, outModes: { default: "bounce" }, random: true, speed: 1, straight: false },
+            number: { density: { enable: true, area: 800 }, value: 80 },
+            opacity: { value: 0.1 },
+            shape: { type: "circle" },
+            size: { value: { min: 1, max: 5 } },
+        },
+        detectRetina: true,
     });
-    document.getElementById('toggle-6steps')?.addEventListener('click', e => {
-      const s=document.getElementById('steps6');
-      if(s.style.display==='none'){s.style.display='block'; e.target.textContent='Ẩn 6 bước chính';}
-      else                        {s.style.display='none'; e.target.textContent='Hiển thị 6 bước chính';}
-    });
-    document.getElementById('btn-auto').addEventListener('click',async ()=>{
-      const r = await fetch('/toggle_auto',{method:'POST'});
-      location.reload();
-    });
-    const autoFlag = "{{ 'true' if auto else 'false' }}";
-    const video=document.getElementById('video'),
-          canvas=document.getElementById('canvas'),
-          cameraBtn=document.getElementById('camera-btn'),
-          snapBtn=document.getElementById('snap'),
-          fileInput=document.querySelector('input[name="photo"]');
-    cameraBtn?.addEventListener('click',async()=>{
-      try{const s=await navigator.mediaDevices.getUserMedia({video:true});
-        video.srcObject=s; video.style.display='block'; snapBtn.style.display='inline-block';}
-      catch{alert('Không thể truy cập webcam');}
-    });
-    snapBtn?.addEventListener('click',()=>{
-      const ctx=canvas.getContext('2d');
-      ctx.drawImage(video,0,0,canvas.width,canvas.height);
-      video.srcObject.getTracks()[0].stop();
-      video.style.display='none'; snapBtn.style.display='none';
-      canvas.toBlob(blob=>{
-        if (autoFlag === "true") {
-          fetch('/upload_auto_image', {
-            method:'POST',
-            body: blob
-          }).then(()=>{ alert('Đã gửi ảnh vào images, tự động sẽ nhận diện!'); });
-        } else {
-          const f=new File([blob],'capture.jpg',{type:'image/jpeg'});
-          const dt=new DataTransfer(); dt.items.add(f);
-          fileInput.files=dt.files;
-        }
-      },'image/jpeg');
-    });
-    {% if auto %}
-    function pollLastAuto(){
-      fetch('/get_last_auto')
-        .then(res=>res.json())
-        .then(obj=>{
-          let info = "";
-          if(obj.plate) {
-            info = `<b>${obj.action}:</b> <span class="text-primary">${obj.plate}</span> lúc <b>${obj.time}</b>`;
-          } else {
-            info = "<i>Chờ ảnh mới...</i>";
-          }
-          document.getElementById('auto-log').innerHTML = info;
+
+    // --- MODULE XỬ LÝ FORM SUBMIT VÀ HIỆU ỨNG LOADING ---
+    const anprForm = document.getElementById('anpr-form');
+    const submitBtn = document.getElementById('submit-btn');
+    if (anprForm && submitBtn) {
+        anprForm.addEventListener('submit', () => {
+            if (submitBtn.classList.contains('btn-disabled')) return;
+            // Thay đổi nút để hiển thị trạng thái loading
+            const btnSpan = submitBtn.querySelector('span');
+            const btnIcon = submitBtn.querySelector('i');
+            if (btnSpan && btnIcon) {
+                btnSpan.textContent = "Đang xử lý...";
+                btnIcon.className = "fas fa-spinner fa-spin mr-2";
+                submitBtn.disabled = true;
+            }
         });
-      setTimeout(pollLastAuto, 2000);
     }
-    pollLastAuto();
-    {% endif %}
-  </script>
+
+    // --- MODULE THÔNG BÁO ---
+    function showNotification(message, isError = false) {
+        const notification = document.getElementById('notification');
+        const notificationMessage = document.getElementById('notification-message');
+        if(notification && notificationMessage) {
+            notificationMessage.textContent = message;
+            notification.classList.remove('translate-x-full');
+            notification.className = `fixed top-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg transform transition-transform duration-500 ${isError ? 'bg-red-500' : 'bg-green-500'}`;
+            setTimeout(() => { notification.classList.add('translate-x-full'); }, 3000);
+        } else {
+            alert(message);
+        }
+    }
+
+    // --- MODULE TOGGLE CÁC BƯỚC XỬ LÝ ---
+    function setupToggle(buttonId, contentId, showText, hideText) {
+      const button = document.getElementById(buttonId);
+      const content = document.getElementById(contentId);
+      if (button && content) {
+        button.addEventListener('click', e => {
+          const target = e.currentTarget;
+          const isHidden = !content.classList.contains('show');
+          if (isHidden) {
+            content.classList.add('show');
+            target.innerHTML = `<i class="fas fa-eye-slash mr-2"></i>${hideText}`;
+            target.classList.add('bg-cyan-600');
+            target.classList.remove('bg-gray-600');
+          } else {
+            content.classList.remove('show');
+            target.innerHTML = `<i class="${buttonId === 'toggle-steps' ? 'fa-list-ol' : 'fa-tasks'} mr-2"></i>${showText}`;
+            target.classList.remove('bg-cyan-600');
+            target.classList.add('bg-gray-600');
+          }
+        });
+      }
+    }
+    setupToggle('toggle-steps', 'steps', 'Hiển thị 11 bước', 'Ẩn 11 bước');
+    setupToggle('toggle-6steps', 'steps6', 'Hiển thị 6 bước chính', 'Ẩn 6 bước');
+
+    // --- MODULE NÚT BẬT/TẮT TỰ ĐỘNG ---
+    document.getElementById('btn-auto')?.addEventListener('click', async () => {
+      try {
+        await fetch('/toggle_auto', { method: 'POST' });
+        location.reload();
+      } catch (error) {
+        showNotification('Lỗi khi chuyển chế độ tự động', true);
+      }
+    });
+
+    // --- MODULE WEBCAM ---
+    const autoFlag = "{{ 'true' if auto else 'false' }}";
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const cameraBtn = document.getElementById('camera-btn');
+    const snapBtn = document.getElementById('snap');
+    const fileInput = document.getElementById('photo');
+
+    if (cameraBtn) {
+        cameraBtn.addEventListener('click', async () => {
+            if (cameraBtn.classList.contains('btn-disabled')) return;
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                video.style.display = 'block';
+                canvas.classList.add('hidden');
+                snapBtn.classList.remove('hidden');
+                cameraBtn.classList.add('hidden');
+            } catch (err) {
+                showNotification('Không thể truy cập webcam. Vui lòng cấp quyền.', true);
+            }
+        });
+    }
+
+    if (snapBtn) {
+        snapBtn.addEventListener('click', () => {
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            video.srcObject.getTracks().forEach(track => track.stop());
+
+            video.style.display = 'none';
+            canvas.classList.remove('hidden');
+            snapBtn.classList.add('hidden');
+            cameraBtn.classList.remove('hidden');
+
+            canvas.toBlob(blob => {
+                if (autoFlag === "true") {
+                    const formData = new FormData();
+                    formData.append('photo', blob, 'capture.jpg');
+                    fetch('/upload_auto_image', { method: 'POST', body: formData })
+                    .then(response => response.json())
+                    .then(data => showNotification(data.msg || 'Đã gửi ảnh để tự động nhận diện!'))
+                    .catch(() => showNotification('Lỗi khi tải ảnh lên.', true));
+                } else {
+                    const file = new File([blob], 'capture.jpg', { type: 'image/jpeg' });
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    fileInput.files = dataTransfer.files;
+                    showNotification('Ảnh đã được chụp và sẵn sàng để xử lý.');
+                }
+            }, 'image/jpeg');
+        });
+    }
+
+    // --- MODULE POLLING CHO CHẾ ĐỘ TỰ ĐỘNG ---
+    function pollLastAuto() {
+      fetch('/get_last_auto')
+        .then(res => res.json())
+        .then(obj => {
+          let info = "";
+          const autoLogEl = document.getElementById('auto-log');
+          if (obj.plate) {
+            info = `<strong>${obj.action}:</strong> <span class="text-yellow-300">${obj.plate}</span> lúc <strong>${obj.time}</strong>`;
+          } else { info = "<i>Đang chờ ảnh mới...</i>"; }
+          if (autoLogEl) { autoLogEl.innerHTML = info; }
+        })
+        .catch(err => console.error('Lỗi polling:', err))
+        .finally(() => { setTimeout(pollLastAuto, 2500); });
+    }
+
+    if (autoFlag === 'true') {
+        pollLastAuto();
+    }
+});
+</script>
 </body>
 </html>
+
