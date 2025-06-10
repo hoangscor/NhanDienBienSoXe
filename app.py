@@ -11,11 +11,17 @@ import pymysql
 from datetime import datetime
 
 # ===== CẤU HÌNH DATABASE =====
-DB_HOST = 'localhost'
-DB_PORT = 3308
-DB_USER = 'root'
-DB_PASS = 'hoangcute123'
-DB_NAME = 'parking_system'
+# DB_HOST = 'localhost'
+# DB_PORT = 3308
+# DB_USER = 'root'
+# DB_PASS = 'hoangcute123'
+# DB_NAME = 'parking_system'
+
+DB_HOST = os.getenv('DB_HOST', 'sql8.freesqldatabase.com')
+DB_PORT = int(os.getenv('DB_PORT', '3306'))
+DB_USER = os.getenv('DB_USER', 'sql8783977')
+DB_PASS = os.getenv('DB_PASS', 'aYQ26ngWZm')
+DB_NAME = os.getenv('DB_NAME', 'sql8783977')
 
 # ===== ĐƯỜNG DẪN =====
 IMAGE_DIR = 'images'
@@ -349,4 +355,6 @@ def edit(row_id):
     return "OK"
 
 if __name__=='__main__':
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    # app.run(host='0.0.0.0', port=8080, debug=True)
+    app.run(host='127.0.0.1', port=5050, debug=True)
+
